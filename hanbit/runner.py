@@ -8,7 +8,7 @@ class Runner(Sprite):
     def __init__(self):
         Sprite.__init__(self)
 
-        self.sprite_image = './hanbit/runnersprite.png'
+        self.sprite_image = './runnersprite.png'
         self.sprite_width = 70
         self.sprite_height = 100
         self.sprite_sheet = pygame.image.load(self.sprite_image).convert()

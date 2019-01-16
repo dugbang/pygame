@@ -4,11 +4,11 @@ from pygame import draw
 from pygame.color import Color
 from pygame.sprite import Sprite
 
-from catapult import Catapult
-from stone import Stone
-from alien import Alien
-from explosion import Explosion
-from const import *
+from hanbit.catapult import Catapult
+from hanbit.stone import Stone
+from hanbit.alien import Alien
+from hanbit.explosion import Explosion
+from hanbit.const import *
 
 FPS = 60
 stone_count = 3
@@ -19,7 +19,7 @@ def decrement_stones():
 
 class Background(Sprite):
     def __init__(self):        
-        self.sprite_image = './hanbit/background.png'
+        self.sprite_image = './background.png'
         self.image = pygame.image.load(
                 self.sprite_image).convert()
         self.rect = self.image.get_rect()
@@ -44,8 +44,8 @@ if __name__ == "__main__":
     run = True
     clock = pygame.time.Clock()
     t = 0
-    fire_sound = pygame.mixer.Sound('./hanbit/fire.ogg')
-    crash_sound = pygame.mixer.Sound('./hanbit/crash.ogg')
+    fire_sound = pygame.mixer.Sound('./fire.ogg')
+    crash_sound = pygame.mixer.Sound('./crash.ogg')
 
     power = 15
     direction = 45

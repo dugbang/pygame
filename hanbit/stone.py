@@ -1,8 +1,7 @@
 ﻿import math
-import pygame
 from pygame.color import Color
-from animation import Animation
-from const import *
+from hanbit.animation import Animation
+from hanbit.const import *
 
 class Stone(Animation):
     # STATE : STONE_READY -> STONE_FLY
@@ -10,7 +9,7 @@ class Stone(Animation):
     # READY일 때만 이동 가능
     # FIRE일 때는 아무것도 못함.
     def __init__(self):
-        self.sprite_image = './hanbit/stone.png'
+        self.sprite_image = './stone.png'
         self.sprite_width = 8
         self.sprite_height = 8
         self.sprite_columns = 4

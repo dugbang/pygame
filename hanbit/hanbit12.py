@@ -2,7 +2,7 @@ import pygame
 from pygame.color import Color
 from pygame.sprite import Sprite
 from pygame.surface import Surface
-from runner import Runner
+from hanbit.runner import Runner
 
 FPS = 28
 
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     run = True
     clock = pygame.time.Clock()
 
-    background_img = pygame.image.load("./hanbit/background.png")
+    background_img = pygame.image.load("./background.png")
 
     runner1 = Runner()
     runner1.rect.x = 0

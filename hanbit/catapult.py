@@ -1,8 +1,6 @@
-﻿import pygame
-from pygame.color import Color
-from animation import Animation
-from stone import Stone
-from const import *
+﻿from pygame.color import Color
+from hanbit.animation import Animation
+from hanbit.const import *
 
 
 class Catapult(Animation):
@@ -11,7 +9,7 @@ class Catapult(Animation):
     # READY일 때만 이동 가능
     # FIRE일 때는 아무것도 못함.
     def __init__(self, stone):
-        self.sprite_image = './hanbit/catapult.png'
+        self.sprite_image = './catapult.png'
         self.sprite_width = 32
         self.sprite_height = 32
         self.sprite_columns = 5

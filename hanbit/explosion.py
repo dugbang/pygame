@@ -1,10 +1,10 @@
 ﻿from pygame.color import Color
-from animation import Animation
+from hanbit.animation import Animation
 
 
 class Explosion(Animation):
     def __init__(self):
-        self.sprite_image = './hanbit/explosionsprite.png'
+        self.sprite_image = './explosionsprite.png'
         self.sprite_width = 100
         self.sprite_height = 100 
         self.sprite_columns = 25

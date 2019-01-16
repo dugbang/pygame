@@ -2,14 +2,13 @@ import pygame
 
 pygame.init()
 screen = pygame.display.set_mode((300, 100))
-pygame.display.set_caption("Drawing image")
+pygame.display.set_caption("Play sound")
 
 clock = pygame.time.Clock()
 run = True
 
-# 이미지 로딩
-runner_img = pygame.image.load("./hanbit/runner.png")
-runner_rect = runner_img.get_rect()
+# 사운드 로딩
+fire_sound = pygame.mixer.Sound('./fire.ogg')
 
 # 게임 루프
 while run:
@@ -17,18 +16,16 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
+        elif event.type == pygame.KEYDOWN:
+            fire_sound.stop()
+            fire_sound.play()
 
     # 2) 게임 상태 업데이트
-    if runner_rect.x > screen.get_width():
-        runner_rect.x = 0
-    else:
-        runner_rect.x += 1
 
     # 3) 게임 상태 그리기
-    screen.fill(pygame.color.Color(0, 0, 255))
-    screen.blit(runner_img, runner_rect)
-
+    screen.fill(pygame.color.Color(255, 255, 255))
     pygame.display.flip()
+
     clock.tick(30)
 
 pygame.quit()

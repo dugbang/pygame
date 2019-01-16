@@ -1,10 +1,10 @@
 ﻿from pygame.color import Color
-from animation import Animation
+from hanbit.animation import Animation
 
 
 class Alien(Animation):
     def __init__(self):
-        self.sprite_image = './hanbit/alien.png'
+        self.sprite_image = './alien.png'
         self.sprite_width = 32
         self.sprite_height = 32
         self.sprite_columns = 3
