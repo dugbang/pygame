@@ -1,9 +1,8 @@
 import math
 
-import numpy as np
 from unittest import TestCase
 
-from coordinate import Matrix
+from test.test_graphic import MobileRobot, ViewCoordinate
 
 
 def get_lines_lists(obj):
@@ -52,103 +51,6 @@ def get_area_of_shape(obj):
     return [[min_x, min_y], [min_x, max_y], [max_x, max_y], [max_x, min_y]]
 
 
-class ViewCoordinate:
-    def __init__(self, x=0, y=0, direction=0):
-        self.pos_x = x
-        self.pos_y = y
-        self.direction = direction
-
-        self.obj_list = []
-        self.shape_list = []
-
-    def set_position(self, x=0, y=0, direction=0):
-        self.pos_x = x
-        self.pos_y = y
-        self.direction = direction
-
-    def add_object(self, obj):
-        self.obj_list.append(obj)
-        self.shape_list.append({'lines': [], 'circles': [], 'line_types': [], })
-
-    def get_total_area(self):
-        min_x = min_y = max_x = max_y = 0
-        points = self.__get_line_lists()
-        for i, point in enumerate(points):
-            # print(point[0], point[1])
-            if i == 0:
-                min_x = max_x = point[0]
-                min_y = max_y = point[1]
-            else:
-                min_x = min(min_x, point[0])
-                max_x = max(max_x, point[0])
-
-                min_y = min(min_y, point[1])
-                max_y = max(max_y, point[1])
-
-        # print(type(min_x))
-        circles = self.__get_circle_lists()
-        for x, y, r in circles:
-            # print(type(min_x), x, y, r)
-            min_x = min(min_x, x - r)
-            max_x = max(max_x, x + r)
-
-            min_y = min(min_y, y - r)
-            max_y = max(max_y, y + r)
-
-        # print(min_x, min_y, max_x, max_y)
-        return [[min_x, min_y], [min_x, max_y], [max_x, max_y], [max_x, min_y]]
-
-    def __get_line_lists(self):
-        lines_ = list()
-        for shape in self.shape_list:
-            for line in shape['lines']:
-                # rec = []
-                for point in line:
-                    # print(point.item(0), point.item(1))
-                    lines_.append([point.item(0), point.item(1)])
-            # lines_.append(rec)
-        return lines_
-
-    def __get_circle_lists(self):
-        ret = list()
-        for shape in self.shape_list:
-            circles = shape['circles']
-            for circle, r in circles:
-                ret.append([circle.item(0), circle.item(1), r])
-        return ret
-
-    def repositioning(self):
-        for i in range(len(self.obj_list)):
-            offset_x = self.obj_list[i].pos_x - self.pos_x
-            offset_y = self.obj_list[i].pos_y - self.pos_y
-
-            mat_axis_zero = Matrix.translation(-self.pos_x, -self.pos_y)
-            mat_axis_ro = Matrix.rotation(self.direction)
-            mat_axis_org = Matrix.translation(self.pos_x, self.pos_y)
-            mat_axis_operation = mat_axis_zero * mat_axis_ro * mat_axis_org
-
-            mat_tr = Matrix.translation(offset_x, offset_y)
-            mat_operation = mat_axis_operation * mat_tr
-
-            self.obj_list[i].repositioning()
-            self.shape_list[i] = {'lines': [], 'circles': [], 'line_types': [], }
-
-            self.shape_list[i]['line_types'] = self.obj_list[i].shape['line_types']
-            for line in self.obj_list[i].shape['lines']:
-                rec = []
-                for point in line:
-                    rec.append(mat_operation * point)
-                    # rec.append(mat_operation * np.mat([[point[0]], [point[1]], [1]]))
-                self.shape_list[i]['lines'].append(rec)
-
-            try:
-                for x, y, r in self.obj_list[i].shape['circles']:
-                    self.shape_list[i]['circles'].append([(mat_operation * np.mat([[x], [y], [1]])), r])
-            except:
-                for circle, r in self.obj_list[i].shape['circles']:
-                    self.shape_list[i]['circles'].append([mat_operation * circle, r])
-
-
 class PixelCoordinate:
     """
     그림을 그리는 적절한 순서를 유지한다.
@@ -180,60 +82,6 @@ class Coordinate:
     win_main = PixelCoordinate()    # 큰 화면
     win_sub = PixelCoordinate()     # 미니맵용
     win_info = PixelCoordinate()    # 정보출력
-
-
-class RealObject:
-    def __init__(self, x=0, y=0, direction=0):
-        # line_types
-        # 1; line(open), 2; close(blank), 3; close(fill color)
-        self.shape = {'lines': [], 'circles': [], 'line_types': [], }
-
-        self.pos_x = x
-        self.pos_y = y
-        self.direction = direction
-
-    def set_position(self, x=0, y=0, direction=0):
-        self.pos_x = x
-        self.pos_y = y
-        self.direction = direction
-
-    def repositioning(self):
-        mat_tr_zero = Matrix.translation(-self.pos_x, -self.pos_y)
-        mat_ro = Matrix.rotation(self.direction)
-        mat_tr_org = Matrix.translation(self.pos_x, self.pos_y)
-        mat_operation = mat_tr_zero * mat_ro * mat_tr_org
-
-        lines = []
-        for line in self.shape['lines']:
-            rec = []
-            try:
-                for x, y in line:
-                    rec.append(mat_operation * np.mat([[x], [y], [1]]))
-            except:
-                for point in line:
-                    rec.append(mat_operation * point)
-            lines.append(rec)
-        self.shape['lines'] = lines
-
-        circles = []
-        try:
-            for x, y, r in self.shape['circles']:
-                circles.append([(mat_operation * np.mat([[x], [y], [1]])), r])
-        except:
-            for circle, r in self.shape['circles']:
-                circles.append([mat_operation * circle, r])
-        self.shape['circles'] = circles
-
-
-class MobileRobot(RealObject):
-    def __init__(self):
-        super().__init__()
-        self.shape['line_types'] = [2, 3]
-
-        self.shape['lines'].append(([-150, -100], [-150, 100], [150, 100], [150, -100]))
-        self.shape['lines'].append(([150, 50], [170, 50], [170, -50], [150, -50]))
-        self.shape['circles'].append([0, 0, 100])
-        self.shape['circles'].append([0, 0, 50])
 
 
 class MobileRobotTDD(MobileRobot):
