@@ -3,89 +3,34 @@ import math
 import numpy as np
 from unittest import TestCase
 
-
-def get_matrix_translation(x, y):
-    return np.mat([[1, 0, x],
-                   [0, 1, y],
-                   [0, 0, 1]])
+from coordinate import Matrix
 
 
-def get_matrix_scale(x, y):
-    return np.mat([[x, 0, 0],
-                   [0, y, 0],
-                   [0, 0, 1]])
+class Coordinate:
+    def __init__(self, x=0, y=0, direction=0):
+        self.pos_x = x
+        self.pos_y = y
+        self.direction = direction
 
+        self.shape = {'lines': [], 'circles': [], }
 
-def get_matrix_rotation(radian):
-    return np.mat([[math.cos(radian), -math.sin(radian), 0],
-                   [math.sin(radian), math.cos(radian), 0],
-                   [0, 0, 1]])
-
-
-class MobileRobotTmp:
-    def __init__(self):
-        self.__shape = {'lines': [], 'circles': [], }
-        self.__shape['lines'].append(([-150, -100], [-150, 100], [150, 100], [150, -100], [-150, -100]))
-        self.__shape['lines'].append(([150, 50], [170, 50], [170, -50], [150, -50], [150, 50]))
-        self.__shape['circles'].append((0, 0, 100))
-        self.__shape['circles'].append((0, 0, 50))
-
-        self.__shape_of_world = {'lines': [], 'circles': [], }
-
-        # self.mass = 10000  # 10kg, 나중에 동역학 부분을 처리할 때 진행
-
-    def tdd_setting(self, shape):
-        self.__shape = shape
-
-    def set_world_position(self, x=0, y=0, rotation=0):
-        self.__shape_of_world = {'lines': [], 'circles': []}
-        mat_ro = get_matrix_rotation(rotation)
-        mat_tr = get_matrix_translation(x, y)
-
-        self.__set_lines_element_of_world(mat_ro, mat_tr)
-        self.__set_circles_element_of_world(mat_ro, mat_tr)
-
-    def __set_circles_element_of_world(self, mat_ro, mat_tr):
-        rec = []
-        for x, y, r in self.__shape['circles']:
-            new_p = mat_ro * mat_tr * np.mat([[x], [y], [1]])
-            rec.append([new_p, r])
-        self.__shape_of_world['circles'].append(rec)
-
-    def __set_lines_element_of_world(self, mat_ro, mat_tr):
-        for line in self.__shape['lines']:
-            rec = []
-            for point in line:
-                new_p = mat_ro * mat_tr * np.mat([[point[0]], [point[1]], [1]])
-                rec.append(new_p)
-            self.__shape_of_world['lines'].append(rec)
-
-    @staticmethod
-    def __get_lines_lists(lines_elements):
+    def get_lines_lists(self):
         lines = []
-        for line in lines_elements:
+        for line in self.shape['lines']:
             rec = []
             for point in line:
                 rec.append([point.item(0), point.item(1)])
             lines.append(rec)
         return lines
 
-    @staticmethod
-    def __get_circles_lists(circles_elements):
+    def get_circles_lists(self):
         circles = []
-        for circle in circles_elements:
-            for point, r in circle:
-                circles.append([point.item(0), point.item(1), r])
+        for circle, r in self.shape['circles']:
+            circles.append([circle.item(0), circle.item(1), r])
         return circles
 
-    def get_lines_of_world_coordinate(self):
-        return self.__get_lines_lists(self.__shape_of_world['lines'])
-
-    def get_circles_of_world_coordinate(self):
-        return self.__get_circles_lists(self.__shape_of_world['circles'])
-
-    def get_area_of_world(self):
-        lines = self.get_lines_of_world_coordinate()
+    def get_area_of_shape(self):
+        lines = self.get_lines_lists()
         min_x = min_y = max_x = max_y = i = 0
         for line in lines:
             for point in line:
@@ -100,7 +45,7 @@ class MobileRobotTmp:
                     min_y = min(min_y, point[1])
                     max_y = max(max_y, point[1])
 
-        circles = self.get_circles_of_world_coordinate()
+        circles = self.get_circles_lists()
         for x, y, r in circles:
             # print(point[0], point[1], point[2])
             min_x = min(min_x, x - r)
@@ -112,131 +57,260 @@ class MobileRobotTmp:
         # print(min_x, min_y, max_x, max_y)
         return [[min_x, min_y], [min_x, max_y], [max_x, max_y], [max_x, min_y]]
 
-    def output(self):
-        for p in self.__get_lines_lists(self.__shape_of_world['lines']):
-            print(p)
-
-        for p in self.__get_circles_lists(self.__shape_of_world['circles']):
-            print(p)
-
 
 class GraphicObject:
-    shape = {'lines': [], 'circles': [], }
+    def __init__(self):
+        self.shape = {'lines': [], 'circles': [], }
+
+        self.world = Coordinate()
+        self.view = Coordinate()
+        self.window = Coordinate()  # 시스템 그래픽에서 화면기준이 어떻게 정의되는가?
+
+    def set_pixel_coordinate(self, x=0, y=480, direction=0, scale_x=1, scale_y=1):
+        self.window.pos_x = x
+        self.window.pos_y = -y
+        self.window.direction = direction
+
+        self.window.shape = {'lines': [], 'circles': [], }
+        self._shape_position_of_pixel(scale_x, scale_y, self.view)
+
+    def _shape_position_of_pixel(self, scale_x, scale_y, source):
+        mat_ro_x = Matrix.rotation_axis_x(math.pi)
+        mat_sc = Matrix.scale(scale_x, scale_y)
+        mat_ro = Matrix.rotation(self.window.direction)
+        mat_tr = Matrix.translation(self.window.pos_x, self.window.pos_y)
+        mat_operation = mat_ro_x * mat_sc * mat_ro * mat_tr
+        # mat_operation = mat_sc * mat_ro * mat_tr
+        for line in source.shape['lines']:
+            rec = []
+            for point in line:
+                rec.append(mat_operation * np.mat([[point[0]], [point[1]], [1]]))
+            self.window.shape['lines'].append(rec)
+        for circle, r in source.shape['circles']:
+            self.window.shape['circles'].append([(mat_operation * circle), r])
+
+    def set_view_coordinate(self, x=0, y=0, direction=0):
+        self.view.pos_x = x
+        self.view.pos_y = y
+        self.view.direction = direction
+
+        self.view.shape = {'lines': [], 'circles': [], }
+        self._shape_reposition_of_view(target=self.view)
+
+    def _shape_reposition_of_view(self, target=None):
+        # target_view = self.view
+        offset_x = self.world.pos_x - target.pos_x
+        offset_y = self.world.pos_y - target.pos_y
+        offset_direction = self.world.direction - target.direction
+
+        # print(offset_x, offset_y)
+
+        mat_tr_zero = Matrix.translation(-self.world.pos_x, -self.world.pos_y)
+        mat_ro = Matrix.rotation(offset_direction)
+        mat_tr_org = Matrix.translation(self.world.pos_x, self.world.pos_y)
+
+        mat_tr = Matrix.translation(offset_x, offset_y)
+        mat_operation = mat_tr_zero * mat_ro * mat_tr_org * mat_tr
+
+        for line in self.shape['lines']:
+            rec = []
+            for point in line:
+                rec.append(mat_operation * np.mat([[point[0]], [point[1]], [1]]))
+            target.shape['lines'].append(rec)
+        for x, y, r in self.shape['circles']:
+            target.shape['circles'].append([(mat_operation * np.mat([[x], [y], [1]])), r])
+
+        # for line in self.world.shape['lines']:
+        #     rec = []
+        #     for point in line:
+        #         rec.append(mat_operation * point)
+        #     target.shape['lines'].append(rec)
+        #
+        # for circle, r in self.world.shape['circles']:
+        #     target.shape['circles'].append([(mat_operation * circle), r])
+
+    def set_world_coordinate(self, x=0, y=0, direction=0):
+        self.world.pos_x = x
+        self.world.pos_y = y
+        self.world.direction = direction
+
+        self.world.shape = {'lines': [], 'circles': [], }
+        self.__shape_position_of_world()
+
+    def __shape_position_of_world(self):
+        mat_ro = Matrix.rotation(self.world.direction)
+        mat_tr = Matrix.translation(self.world.pos_x, self.world.pos_y)
+        mat_operation = mat_ro * mat_tr
+        for line in self.shape['lines']:
+            rec = []
+            for point in line:
+                rec.append(mat_operation * np.mat([[point[0]], [point[1]], [1]]))
+            self.world.shape['lines'].append(rec)
+        for x, y, r in self.shape['circles']:
+            self.world.shape['circles'].append([(mat_operation * np.mat([[x], [y], [1]])), r])
 
 
 class MobileRobot(GraphicObject):
     def __init__(self):
+        super().__init__()
         self.shape['lines'].append(([-150, -100], [-150, 100], [150, 100], [150, -100], [-150, -100]))
         self.shape['lines'].append(([150, 50], [170, 50], [170, -50], [150, -50], [150, 50]))
-        self.shape['circles'].append((0, 0, 100))
-        self.shape['circles'].append((0, 0, 50))
+        self.shape['circles'].append([0, 0, 100])
+        self.shape['circles'].append([0, 0, 50])
+
+        self.sensing_view = Coordinate()
+        self.sensing_pixel = Coordinate()
+
+    def set_sensing_view_coordinate(self, x=0, y=0, direction=0):
+        """
+        윈도좌표계를 사용하면 필요없을 듯...
+        """
+        self.sensing_view.pos_x = x
+        self.sensing_view.pos_y = y
+        self.sensing_view.direction = direction
+        self.sensing_view.shape = {'lines': [], 'circles': [], }
+
+        self._shape_reposition_of_view(target=self.sensing_view)
+
+    def output(self):
+        print(self.__class__.__name__)
+        for line in self.world.shape['lines']:
+            for point in line:
+                print(point)
+        for circle, r in self.view.shape['circles']:
+            print(circle, r)
 
 
-class TestTransformation(TestCase):
-    """
-    기본적인 동작순서는 다음과 같을 것으로 판단됨.
-    1. 전체크기와 화면크기에 비례해서 배율을 조건
-        - 실제 치수에 대한 값 적용
-    2. 기준점 변경
-        - pixel
-    3. 회전
-    """
-    """
-    TDD 순서
-    1. 오브젝트를 정의한다.
-    2. 월드좌표계에서 위치를 확인한다.
-    3. 뷰좌표계에서 위치를 확인한다.
-    4. 픽셀좌료계에서 위치를 확인한다.
-    """
-    def setUp(self):
-        self.graphic_object = MobileRobot()
-        # self.view_area = [[-100, -100], [400, -100], [400, 400], [-100, 400], [-100, -100]]
-        self.robot = MobileRobotTmp()
+class MobileRobotTDD(MobileRobot):
+    def __init__(self):
+        super().__init__()
+        self.shape = {'lines': [], 'circles': [], }
 
         self.__line1 = [[-100, -100], [-100, 100], [100, 100], [100, -100], [-100, -100]]
         self.__line2 = [[100, 50], [170, 50], [170, -50], [100, -50], [100, 50]]
         self.__circle1 = [0, 0, 100]
-        self.__circle2 = [0, 50, 50]
+        self.__circle2 = [50, 0, 50]
 
-        # self.__line1 =
-        self.__element = {'lines': [], 'circles': []}
-        self.__element['lines'].append(self.__line1)
-        self.__element['lines'].append(self.__line2)
-        self.__element['circles'].append(self.__circle1)
-        self.__element['circles'].append(self.__circle2)
-        self.robot.tdd_setting(self.__element)
+        self.shape['lines'].append(self.__line1)
+        self.shape['lines'].append(self.__line2)
+        self.shape['circles'].append(self.__circle1)
+        self.shape['circles'].append(self.__circle2)
 
-        # self.robot.set_world_position(rotation=math.pi/2)
-
-    def test_robot_area(self):
-        self.robot.set_world_position()
-        area = self.robot.get_area_of_world()
-        # print(area)
-        self.assertListEqual(area, [[-100, -100], [-100, 100], [170, 100], [170, -100]])
-
-    def test_robot_world_position_xy(self):
-
-        offset_x = 100
-        offset_y = 100
-        self.robot.set_world_position(x=offset_x, y=offset_y)
-
-        lines_ = self.__get_lines_of_offset(offset_x, offset_y)
-        lines = self.robot.get_lines_of_world_coordinate()
-        self.assertListEqual(lines[0], lines_[0])
-        self.assertListEqual(lines[1], lines_[1])
-
-        circles_ = self.__get_circles_of_offset(offset_x, offset_y)
-        circles = self.robot.get_circles_of_world_coordinate()
-        self.assertListEqual(circles[0], circles_[0])
-        self.assertListEqual(circles[1], circles_[1])
-
-        offset_x = -10
-        offset_y = -50
-        self.robot.set_world_position(x=offset_x, y=offset_y)
-
-        lines_ = self.__get_lines_of_offset(offset_x, offset_y)
-        lines = self.robot.get_lines_of_world_coordinate()
-        self.assertListEqual(lines[0], lines_[0])
-        self.assertListEqual(lines[1], lines_[1])
-
-        circles_ = self.__get_circles_of_offset(offset_x, offset_y)
-        circles = self.robot.get_circles_of_world_coordinate()
-        self.assertListEqual(circles[0], circles_[0])
-        self.assertListEqual(circles[1], circles_[1])
-
-    def __get_circles_of_offset(self, offset_x, offset_y):
+    def get_circles_of_direction(self, direction):
         circles_ = []
-        for circle in self.__element['circles']:
+        for x, y, r in self.shape['circles']:
+            new_x = x * math.cos(direction) - y * math.sin(direction)
+            new_y = y * math.cos(direction) + x * math.sin(direction)
+            circles_.append([new_x, new_y, r])
+        return circles_
+
+    def get_circles_of_offset(self, offset_x, offset_y):
+        circles_ = []
+        for circle in self.shape['circles']:
             circles_.append([circle[0] + offset_x, circle[1] + offset_y, circle[2]])
         return circles_
 
-    def __get_lines_of_offset(self, offset_x, offset_y):
+    def get_lines_of_offset(self, offset_x, offset_y):
         lines_ = []
-        for line in self.__element['lines']:
+        for line in self.shape['lines']:
             rec = []
             for point in line:
                 rec.append([point[0] + offset_x, point[1] + offset_y])
             lines_.append(rec)
         return lines_
 
-    def test_robot_world_position(self):
-        self.robot.set_world_position()
-        lines = self.robot.get_lines_of_world_coordinate()
-        self.assertListEqual(lines[0], self.__line1)
-        self.assertListEqual(lines[1], self.__line2)
 
-        circles = self.robot.get_circles_of_world_coordinate()
-        self.assertListEqual(circles[0], self.__circle1)
-        self.assertListEqual(circles[1], self.__circle2)
+class TestTransformation(TestCase):
+    """
+    TDD 순서
+    1. 오브젝트를 정의한다.
+    2. 월드좌표계에서 위치를 확인한다.
+    3. 뷰좌표계에서 위치를 확인한다.
+    4. 픽셀좌표계에서 위치를 확인한다.
+    """
+    def setUp(self):
+        self.tdd_robot = MobileRobotTDD()
 
-        # lines = self.robot.get_lines_of_world_coordinate()
-        # for i, line in enumerate(lines):
-        #     self.assertListEqual(line, self.__element['lines'][i])
-        #
-        # circles = self.robot.get_circles_of_world_coordinate()
-        # for i, circle in enumerate(circles):
-        #     self.assertListEqual(circle, self.__element['circles'][i])
-        #     # self.assertEqual(circle, self.__element['circles'][i])
+    def test_xy_move_world_01(self):
+        offset_x = 10
+        offset_y = 10
+        self.tdd_robot.set_world_coordinate(x=offset_x, y=offset_y)
+
+        manual_ = self.tdd_robot.get_circles_of_offset(offset_x, offset_y)
+        matrix_ = self.tdd_robot.world.get_circles_lists()
+        self.assertListEqual(matrix_[0], manual_[0])
+        self.assertListEqual(matrix_[1], manual_[1])
+
+        manual_ = self.tdd_robot.get_lines_of_offset(offset_x, offset_y)
+        matrix_ = self.tdd_robot.world.get_lines_lists()
+        self.assertListEqual(matrix_[0], manual_[0])
+        self.assertListEqual(matrix_[1], manual_[1])
+
+        offset_x_view = -200
+        offset_y_view = -200
+        self.tdd_robot.set_view_coordinate(x=offset_x_view, y=offset_y_view)
+
+        manual_ = self.tdd_robot.get_circles_of_offset(offset_x-offset_x_view, offset_y-offset_y_view)
+        matrix_ = self.tdd_robot.view.get_circles_lists()
+        self.assertListEqual(matrix_[0], manual_[0])
+        self.assertListEqual(matrix_[1], manual_[1])
+        print(matrix_[0])
+        print(matrix_[1])
+
+        manual_ = self.tdd_robot.get_lines_of_offset(offset_x-offset_x_view, offset_y-offset_y_view)
+        matrix_ = self.tdd_robot.view.get_lines_lists()
+        self.assertListEqual(matrix_[0], manual_[0])
+        self.assertListEqual(matrix_[1], manual_[1])
+
+        self.tdd_robot.set_pixel_coordinate()
+        matrix_ = self.tdd_robot.window.get_circles_lists()
+        print(matrix_[0])
+        print(matrix_[1])
+
+    def test_xy_move_world_00(self):
+        offset_x = 0
+        offset_y = 0
+        self.tdd_robot.set_world_coordinate(x=offset_x, y=offset_y)
+
+        manual_ = self.tdd_robot.get_circles_of_offset(offset_x, offset_y)
+        matrix_ = self.tdd_robot.world.get_circles_lists()
+        self.assertListEqual(matrix_[0], manual_[0])
+        self.assertListEqual(matrix_[1], manual_[1])
+
+        manual_ = self.tdd_robot.get_lines_of_offset(offset_x, offset_y)
+        matrix_ = self.tdd_robot.world.get_lines_lists()
+        self.assertListEqual(matrix_[0], manual_[0])
+        self.assertListEqual(matrix_[1], manual_[1])
+
+        offset_x_view = -200
+        offset_y_view = -200
+        self.tdd_robot.set_view_coordinate(x=offset_x_view, y=offset_y_view)
+
+        manual_ = self.tdd_robot.get_circles_of_offset(offset_x-offset_x_view, offset_y-offset_y_view)
+        matrix_ = self.tdd_robot.view.get_circles_lists()
+        self.assertListEqual(matrix_[0], manual_[0])
+        self.assertListEqual(matrix_[1], manual_[1])
+        # print(manual_[0])
+        # print(manual_[1])
+
+        manual_ = self.tdd_robot.get_lines_of_offset(offset_x-offset_x_view, offset_y-offset_y_view)
+        matrix_ = self.tdd_robot.view.get_lines_lists()
+        self.assertListEqual(matrix_[0], manual_[0])
+        self.assertListEqual(matrix_[1], manual_[1])
+
+        self.tdd_robot.set_pixel_coordinate()
+
+    def test_graphic(self):
+        graphic_object = MobileRobot()
+        # view_area = ViewArea()
+
+        # graphic_object.output()
+        # view_area.output()
+
+        graphic_object.set_world_coordinate()
+        graphic_object.set_view_coordinate(x=-200, y=-200)
+        graphic_object.output()
+        # graphic_object.set_sensing_view_coordinate(100, 30)
 
     def test_Translation(self):
         org_x = 3
@@ -285,13 +359,9 @@ class TestTransformation(TestCase):
         self.assertEqual(new_xy[1], [[-3]])
 
     def test_Rotation_point(self):
-        """
-        라인 트레이서의 라인센싱 부분에 적용할 수 있음.
-        :return:
-        """
-
         # rotation = 30
         radian = math.radians(180)
         rm = np.mat([[math.cos(radian), -math.sin(radian), 0],
                      [math.sin(radian), math.cos(radian), 0],
                      [0, 0, 1]])
+
