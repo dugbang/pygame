@@ -44,10 +44,10 @@ class GraphicPoint:
 
 
 class GraphicCircle:
-    def __init__(self, x=0, y=0, radius=10, fill=False, color=None):
+    def __init__(self, x=0, y=0, radius=10, width=0, color=None):
         self.mat = np.mat([[x], [y], [1]])
         self.r = radius
-        self.fill = fill
+        self.width = width
         self.color = color
 
     def get_element(self):
@@ -55,7 +55,7 @@ class GraphicCircle:
 
 
 def circle_operation(circle, mat_operation):
-    circle_ = GraphicCircle(radius=circle.r, fill=circle.fill, color=circle.color)
+    circle_ = GraphicCircle(radius=circle.r, width=circle.width, color=circle.color)
     circle_.mat = mat_operation * circle.mat
     return circle_
 
@@ -63,17 +63,17 @@ def circle_operation(circle, mat_operation):
 class GraphicLine:
     """
     # line_types
-    # 1; line(open), 2; close(blank), 3; close(fill color)
+    # 1; line(open), 2; line(close), 3; ploy
     """
-    def __init__(self, line_type=0, fill=False, color=None):
+    def __init__(self, line_type=0, width=0, color=None):
         self.line_type = line_type
-        self.fill = fill
+        self.width = width
         self.color = color
         self.points = []
 
 
 def line_operation(line, mat_operation):
-    line_ = GraphicLine(line_type=line.line_type, fill=line.fill, color=line.color)
+    line_ = GraphicLine(line_type=line.line_type, width=line.width, color=line.color)
     point_ = GraphicPoint()
     for point in line.points:
         point_.mat = mat_operation * point.mat
@@ -118,13 +118,13 @@ class RealObject:
 class MobileRobot(RealObject):
     def __init__(self):
         super().__init__()
-        body = GraphicLine(line_type=2, color=0, fill=False)
+        body = GraphicLine(line_type=2, width=0, color=0)
         body.points = [GraphicPoint(-150, -100),
                        GraphicPoint(-150, 100),
                        GraphicPoint(150, 100),
                        GraphicPoint(150, -100)]
 
-        sensing = GraphicLine(line_type=3, color=0, fill=True)
+        sensing = GraphicLine(line_type=2, width=0, color=0)
         sensing.points = [GraphicPoint(150, 50),
                           GraphicPoint(170, 50),
                           GraphicPoint(170, -50),
@@ -132,8 +132,8 @@ class MobileRobot(RealObject):
 
         self.shape['lines'].append(body)
         self.shape['lines'].append(sensing)
-        self.shape['circles'].append(GraphicCircle(x=0, y=0, radius=100, color=0, fill=False))
-        self.shape['circles'].append(GraphicCircle(x=0, y=0, radius=50, color=0, fill=True))
+        self.shape['circles'].append(GraphicCircle(x=0, y=0, radius=100, width=0, color=0))
+        self.shape['circles'].append(GraphicCircle(x=0, y=0, radius=50, width=0, color=0))
 
 
 class ViewCoordinate:

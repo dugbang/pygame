@@ -1,24 +1,18 @@
 import pygame
 
+from constant import WIDTH, HEIGHT, FPS, BLACK, BLUE, GREEN, RED
+from pixel import PixelWindow
+
 pygame.init()
 
 # WIDTH = 720
 # HEIGHT = 405
-WIDTH = 1080
-HEIGHT = 600
 
 size = (WIDTH, HEIGHT)
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("graphic testing")
 
-FPS = 10  # frames per second
 clock = pygame.time.Clock()
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-BLUE = (0, 0, 255)
-GREEN = (0, 255, 0)
-RED = (255, 0, 0)
 
 
 class Player(pygame.sprite.Sprite):
@@ -49,8 +43,9 @@ if __name__ == "__main__":
     update_flag = True
     start_pos = [0, 0]
 
-    win_main = pygame.Surface((200, 200))
-    win_main.fill(RED)
+    win_main = PixelWindow(50, 50, 660, 508, screen)
+    win_mini = PixelWindow(760, 50, 270, 250, screen)
+    win_info = PixelWindow(760, 330, 270, 220, screen)
 
     # Game Loop
     while run:
@@ -70,6 +65,10 @@ if __name__ == "__main__":
             update_flag = False if update_flag else True
 
         # 2) 게임 논리 실행
+        win_main.update(time_passed)
+        win_mini.update(time_passed)
+        win_info.update(time_passed)
+
         # 2) 게임 상태 업데이트
         if start_pos[0] > screen.get_width():
             start_pos[0] = 0
@@ -80,7 +79,7 @@ if __name__ == "__main__":
             all_sprites.update()
 
         # 3) 게임 상태 그리기
-        screen.fill(WHITE)
+        screen.fill(BLACK)
         all_sprites.draw(screen)
 
         if key == pygame.K_1 or key == pygame.K_LEFT:
@@ -100,8 +99,13 @@ if __name__ == "__main__":
                              pygame.Rect(start_pos, (50, 50)))
 
         # all_sprites.draw(screen)
-        screen.blit(win_main, (50, 50))
-        pygame.draw.polygon(win_main, GREEN, [(100, 100), (300, 100), (100, 150), ])
+        # screen.blit(win_main, (50, 50))
+        # pygame.draw.polygon(win_main, GREEN, [(100, 100), (300, 100), (100, 150), ])
+        # screen.blit(win_mini, (760, 50))
+        # screen.blit(win_info, (760, 330))
+        win_main.draw(bg=BLUE)
+        win_mini.draw(bg=GREEN)
+        win_info.draw(bg=RED)
 
         pygame.display.flip()
 

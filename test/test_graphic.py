@@ -31,13 +31,13 @@ class MobileRobotTDD(MobileRobot):
         super().__init__()
         self.reset_shape()
 
-        body = GraphicLine(line_type=2, color=0, fill=False)
+        body = GraphicLine(line_type=2, width=0, color=0)
         body.points = [GraphicPoint(-150, -100),
                        GraphicPoint(-150, 100),
                        GraphicPoint(150, 100),
                        GraphicPoint(150, -100)]
 
-        sensing = GraphicLine(line_type=3, color=0, fill=True)
+        sensing = GraphicLine(line_type=3, width=0, color=0)
         sensing.points = [GraphicPoint(150, 50),
                           GraphicPoint(170, 50),
                           GraphicPoint(170, -50),
@@ -45,8 +45,8 @@ class MobileRobotTDD(MobileRobot):
 
         self.shape['lines'].append(body)
         self.shape['lines'].append(sensing)
-        self.shape['circles'].append(GraphicCircle(x=0, y=0, radius=100, color=0, fill=False))
-        self.shape['circles'].append(GraphicCircle(x=50, y=0, radius=50, color=0, fill=True))
+        self.shape['circles'].append(GraphicCircle(x=0, y=0, radius=100, width=0, color=0))
+        self.shape['circles'].append(GraphicCircle(x=50, y=0, radius=50, width=0, color=0))
 
     def get_circles_of_direction(self, direction):
         circles_ = []
